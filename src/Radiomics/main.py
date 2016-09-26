@@ -17,6 +17,10 @@ from profiling_tools import time
 @time
 def glrl_vector_loop(image, direction, bin_width):
 
+    bin_width = int(bin_width)
+
+    image = (image / bin_width) * bin_width
+
     return _glrl_vector_loop(image, direction, bin_width)
 
 def main():
