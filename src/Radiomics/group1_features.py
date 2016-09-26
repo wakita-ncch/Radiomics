@@ -9,6 +9,8 @@ Group 1 : First order statistics
 X : numpy 1-d array
 """
 
+# comment
+
 def energy(X):
 
     return np.sum(np.dot(X, X))
