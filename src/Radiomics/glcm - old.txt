@@ -1,0 +1,230 @@
+import pyximport
+import numpy as np
+import math
+
+pyximport.install(setup_args={'include_dirs':[np.get_include()]}, inplace=True)
+
+from _glcm_loop import _2d_glcm_loop
+from _glcm_3d_loop import _glcm_3d_loop
+
+import profiling_tools
+
+"""
+Group 3 : Textural features
+Image : Numpy 2-d array
+glco_matrix : Gray-level co-occurrence matrix (2-d np.ndarray)
+gli : Discrete gray level intensities (1-d np.ndarray)
+"""
+
+def makeGLCOMatrix(image, delta, alpha):
+
+    # Resample voxel intensities into equally spaced bins using a bin-width of 25 HUs
+
+    image = image / 25.0
+    image = image.astype(np.int)
+
+    min = np.min(image)
+    max = np.max(image)
+
+    glco_matrix = np.zeros((max - min + 1, max - min + 1))
+
+    rolled_image = np.roll(image, -delta, axis=1)
+
+    for (i, j) in zip(image[:,:-delta], rolled_image[:,:-delta]):
+
+        glco_matrix[i-min,j-min] += 1
+
+    gli = np.array([np.arange(min, max)])
+
+    return glco_matrix, gli
+
+def autocorrelation(glco_matrix, gli):
+
+    return np.sum(gli.T * glco_matrix * gli)
+
+def cluster_prominence(glco_matrix, gli):
+
+    ux, uy = np.meshgrid(np.average(glco_matrix, axis=1), 
+                         np.average(glco_matrix, axis=0))
+
+    ii, jj = np.meshgrid(gli, gli)
+
+    return np.sum((ii + jj - ux - uy) ** 4 * glco_matrix)
+
+def cluster_shade(glco_matrix, gli):
+
+    ux, uy = np.meshgrid(np.average(glco_matrix, axis=1), 
+                         np.average(glco_matrix, axis=0))
+
+    ii, jj = np.meshgrid(gli, gli)
+
+    return np.sum((ii + jj - ux - uy) ** 3 * glco_matrix)
+
+def cluster_tendency(glco_matrix, gli):
+
+    ux, uy = np.meshgrid(np.average(glco_matrix, axis=1), 
+                         np.average(glco_matrix, axis=0))
+
+    ii, jj = np.meshgrid(gli, gli)
+
+    return np.sum((ii + jj - ux - uy) ** 2 * glco_matrix)
+
+def contrast(glco_matrix, gli):
+
+    ii, jj = np.meshgrid(gli, gli)
+
+    return np.sum((ii - jj) ** 2 * glco_matrix)
+
+def correlation(glco_matrix, gli):
+
+    ux, uy = np.meshgrid(np.average(glco_matrix, axis=1), 
+                         np.average(glco_matrix, axis=0))
+
+    ii, jj = np.meshgrid(gli, gli)
+
+    return np.sum((ii * jj * glco_matrix - ux - uy) / (np.std(ux) * np.std(uy)))
+
+def difference_entropy(glco_matrix, gli):
+
+    ii, jj = np.meshgrid(np.arange(len(gli)), np.arange(len(gli)))
+
+    subtraction_matrix = np.abs(ii-jj)
+    
+    difference_entropy = np.zeros(len(gli))
+
+    for index, element in glco_matrix.ravel():
+
+        difference_entropy[subtraction_matrix.ravel()[index]] += element
+
+    return np.sum(difference_entropy * np.log2(difference_entropy))
+
+def dissimilarity(glco_matrix, gli):
+
+    ii, jj = np.meshgrid(gli, gli)
+
+    return np.sum(np.abs(ii - jj) * glco_matrix)
+
+def glco_energy(glco_matrix):
+
+    return np.sum(glco_matrix ** 2)
+
+def glco_entropy(glco_matrix):
+
+    return -np.sum(glco_matrix * np.log2(glco_matrix))
+
+def homogeneity1(glco_matrix):
+
+    ii, jj = np.meshgrid(gli, gli)
+
+    return np.sum(glco_matrix.astype(np.float) / (1 + np.abs(ii - jj)).astype(np.float))
+
+def homogeneity2(glco_matrix):
+
+    ii, jj = np.meshgrid(gli, gli)
+
+    return np.sum(glco_matrix.astype(np.float) / (1 + (ii - jj) ** 2).astype(np.float))
+
+def IMC1(glco_matrix):
+
+    # IMC1 : Informational measure of correlation 1
+
+    HXY = glco_entropy(glco_matrix)
+
+    px = np.average(glco_matrix, axis=1)
+    py = np.average(glco_matrix, axis=0)
+
+    pi, pj = np.meshgrid(px, py)
+
+    HXY1 = - np.sum(glco_matrix * np.log2(pi * pj))
+
+    HX = - np.sum(px * np.log2(px))
+    HY = - np.sum(py * np.log2(py))
+
+    return (HXY - HXY1) / max(HX, HY)
+
+def IMC2(glco_matrix):
+
+    # IMC2 : Informational measure of correlation 2
+
+    HXY = glco_entropy(glco_matrix)
+
+    px = np.average(glco_matrix, axis=1)
+    py = np.average(glco_matrix, axis=0)
+
+    pi, pj = np.meshgrid(px, py)
+
+    HXY2 = - np.sum(pi * pj * np.log2(pi * pj))
+
+    return math.sqrt(1.0 - math.exp(-2 * (HXY2 - HXY)))
+
+def IDMN(glco_matrix, gli):
+
+    # IDMN : Inverse difference moment normalized
+
+    ii, jj = np.meshgrid(gli, gli)
+
+    return np.sum(glco_matrix / (1 + (ii - jj) ** 2 / len(gli) ** 2))
+
+def IDN(glco_matrix, gli):
+
+    # IDN : Inverse difference normalized
+
+    ii, jj = np.meshgrid(gli, gli)
+
+    return np.sum(glco_matrix / (1 + np.abs(ii - jj) / len(gli)))
+
+def inverse_variance(glco_matrix, gli):
+
+    ii, jj = np.meshgrid(gli, gli)
+
+    return np.sum(glco_matrix / (ii - jj) ** 2)
+
+def maximum_probability(glco_matrix):
+
+    return np.max(glco_matrix)
+
+def sum_average(glco_matrix, gli):
+
+    sum_matrix = np.meshgrid(np.arange(len(gli)), np.arange(len(gli)))
+
+    sum_average = np.zeros(2 * len(gli) - 1)
+
+    for index, element in glco_matrix.ravel():
+
+        sum_average[sum_matrix.ravel()[index]] += element
+
+    return np.sum(np.arange(2, 2 * len(gli) + 1) * sum_average)
+
+def sum_entropy(glco_matrix, gli):
+
+    ij = np.meshgrid(gli, gli)
+
+    sum_matrix = np.meshgrid(np.arange(len(gli)), np.arange(len(gli)))
+
+    sum_entropy = np.zeros(2 * len(gli) - 1)
+
+    for index, element in glco_matrix.ravel():
+
+        sum_entropy[sum_matrix.ravel()[index]] += element
+
+    return - np.sum(sum_entropy * np.log2(sum_entropy))
+
+def sum_variance(glco_matrix, gli):
+
+    SE = sum_entropy(glco_matrix, gli)
+
+    sum_matrix = np.meshgrid(np.arange(len(gli)), np.arange(len(gli)))
+
+    sum_variance = np.zeros(2 * len(gli) - 1)
+
+    for index, element in glco_matrix.ravel():
+
+        sum_variance[sum_matrix.ravel()[index]] += element
+
+    return np.sum((np.arange(2, 2 * len(gli) + 1) ** 2) * sum_variance)
+
+def variance(glco_matrix, gli):
+
+    u = np.mean(glco_matrix)
+
+    return np.sum(((np.arange(1, len(gli) + 1) - u)**2) * glco_matrix)
