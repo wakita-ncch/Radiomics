@@ -27,7 +27,7 @@ def _run_length(int [:] array, int [:,:] out):
 
             elif value != last_value:
 
-                out[last_value, count] += 1
+                out[last_value, count - 1] += 1
 
                 last_value = value
                 count = 1
@@ -37,13 +37,12 @@ def _run_length(int [:] array, int [:,:] out):
             if value == last_value:
 
                 count += 1
-
-                out[last_value, count] += 1
+                out[last_value, count - 1] += 1
 
             elif value != last_value:
 
-                out[last_value, count] += 1
-                out[value, 1] += 1
+                out[last_value, count - 1] += 1
+                out[value, 0] += 1
 
 def boundary_check(int xs, int ys, int zs, int len_x, int len_y, int len_z):
 
@@ -86,24 +85,44 @@ def _calc_run_length(int [:,:,:] image,
 
     _run_length(array, out)
 
+def _form_np_matrix(np.ndarray out):
+
+    # np.ndarray[dtype=np.int64_t, ndim=2, negative_indices=False, mode='c'] got error
+
+    cdef int i, val, idx
+
+    out = out[1:,:]
+    sum_col = np.sum(out, axis=0)
+
+    for i, val in enumerate(sum_col[::-1]):
+
+        if val != 0:
+
+            break
+
+    return out[:,0:-i]
+    
 @cython.boundscheck(False)
-def _glrl_vector_loop(int [:,:,:] image, int direction, int bin_width):
+def _glrl_vector_loop(int [:,:,:] image, int direction):
+
+    # image : converted to gray levels
 
     cdef int x, y, z, xs, ys, zs, len_x, len_y, len_z
-    cdef int i, j, ii, jj, min, max, n #, len_array
-    cdef int dx, dy, dz
+    cdef int i, j, ii, jj, _min, _max, n
+    cdef int dx, dy, dz, max_len_of_out
     cdef int last_num = -1, count = 0
 
     len_z = image.shape[0]
     len_x = image.shape[1]
     len_y = image.shape[2]
 
-    min = np.min(image)
-    max = np.max(image)
+    _min = np.min(image)
+    _max = np.max(image)
 
-    levels = (max - min) / bin_width + 1
+    levels = _max + 1
+    max_len_of_out = <int>(sqrt(len_x ** 2 + len_y ** 2 + len_z ** 2))
 
-    out = np.zeros([1000, 1000], dtype = np.int) # you should determine the size of out
+    out = np.zeros([levels, max_len_of_out], dtype = np.int) # you should determine the size of out
     cdef int [:,:] out_view = out
 
     if direction == 1:
@@ -395,5 +414,5 @@ def _glrl_vector_loop(int [:,:,:] image, int direction, int bin_width):
             for y in range(len_y):
 
                 _calc_run_length(image, x, y, z, dx, dy, dz, out_view)
-
-    return out
+    
+    return _form_np_matrix(out)

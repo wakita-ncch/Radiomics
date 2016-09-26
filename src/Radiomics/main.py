@@ -17,23 +17,25 @@ from profiling_tools import time
 @time
 def glrl_vector_loop(image, direction, bin_width):
 
+    # convert pixel intensities into gray levels wi
+
     bin_width = int(bin_width)
 
-    image = (image / bin_width) * bin_width
+    image /= bin_width
 
-    return _glrl_vector_loop(image, direction, bin_width)
+    return _glrl_vector_loop(image, direction)
 
 def main():
 
-    #image = np.array([[[5, 2, 5, 4, 4], 
-    #                   [3, 3, 3, 1, 3],
-    #                   [2, 1, 1, 1, 3],
-    #                   [4, 2, 2, 2, 3],
-    #                   [3, 5, 3, 3, 2]]])
+    image = np.array([[[5, 2, 5, 4, 4], 
+                       [3, 3, 3, 1, 3],
+                       [2, 1, 1, 1, 3],
+                       [4, 2, 2, 2, 3],
+                       [3, 5, 3, 3, 2]]])
 
-    image = np.arange(3 * 3 * 3).reshape((3, 3, 3))
+    #image = np.arange(3 * 3 * 3).reshape((3, 3, 3))
 
-    print glrl_vector_loop(image, 8, 1)
+    print glrl_vector_loop(image, 1, 1)
 
     #volume = np.arange(5 * 7 * 8).reshape((5, 7, 8))
 

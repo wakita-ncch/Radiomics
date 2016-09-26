@@ -18,7 +18,7 @@ def glcm_vector_loop(volume, distance, dx, dy, dz, bin_width):
 
     volume = (volume / bin_width) * bin_width
 
-    return _3d_glcm_vector_loop(volume, distance, dx, dy, dz, bin_width)
+    return _3d_glcm_vector_loop(volume, distance, dx, dy, dz)
 
 class GLCM_Matrices:
 
