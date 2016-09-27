@@ -1,6 +1,7 @@
 from group1_features import *
 from group2_features import *
 from group3_glcm import *
+from group3_glrl import *
 
 import pyximport
 import numpy as np
@@ -14,16 +15,6 @@ from _glrl_loop import _glrl_vector_loop
 
 from profiling_tools import time
 
-@time
-def glrl_vector_loop(image, direction, bin_width):
-
-    # convert pixel intensities into gray levels wi
-
-    bin_width = int(bin_width)
-
-    image /= bin_width
-
-    return _glrl_vector_loop(image, direction)
 
 def main():
 
@@ -35,7 +26,7 @@ def main():
 
     #image = np.arange(3 * 3 * 3).reshape((3, 3, 3))
 
-    print glrl_vector_loop(image, 1, 1)
+    GLRL_Matrix(image, 1, 1)
 
     #volume = np.arange(5 * 7 * 8).reshape((5, 7, 8))
 

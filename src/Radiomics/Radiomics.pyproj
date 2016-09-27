@@ -32,6 +32,9 @@
     <Compile Include="group2_features.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="group3_glrl.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="main.py" />
     <Compile Include="profiling_tools.py">
       <SubType>Code</SubType>
