@@ -10,23 +10,31 @@ pyximport.install(setup_args={'include_dirs':[np.get_include()]}, inplace=True)
 
 from _glrl_loop import _glrl_vector_loop
 
-#import scipy.misc
-#import matplotlib.pyplot as plt
+import scipy.misc
+import matplotlib.pyplot as plt
+import pywt
 
 from profiling_tools import time
 
+def wavelet_transform(image):
+
+    return pywt.dwtn(image, 'coif1')
 
 def main():
 
-    image = np.array([[[5, 2, 5, 4, 4], 
-                       [3, 3, 3, 1, 3],
-                       [2, 1, 1, 1, 3],
-                       [4, 2, 2, 2, 3],
-                       [3, 5, 3, 3, 2]]])
+    #image = np.array([[[5, 2, 5, 4, 4], 
+    #                   [3, 3, 3, 1, 3],
+    #                   [2, 1, 1, 1, 3],
+    #                   [4, 2, 2, 2, 3],
+    #                   [3, 5, 3, 3, 2]]])
 
-    #image = np.arange(3 * 3 * 3).reshape((3, 3, 3))
+    image = np.arange(3 * 3 * 3).reshape((3, 3, 3))
 
-    GLRL_Matrix(image, 1, 1)
+    #coeffs = pywt.dwtn(image, 'coif1')
+
+    print wavelet_transform(image)
+
+    #GLRL_Matrix(image, 1, 1)
 
     #volume = np.arange(5 * 7 * 8).reshape((5, 7, 8))
 
