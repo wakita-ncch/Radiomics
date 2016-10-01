@@ -44,7 +44,7 @@ def _run_length(int [:] array, int [:,:] out):
                 out[last_value, count - 1] += 1
                 out[value, 0] += 1
 
-def boundary_check(int xs, int ys, int zs, int len_x, int len_y, int len_z):
+def _boundary_check(int xs, int ys, int zs, int len_x, int len_y, int len_z):
 
     if xs >= 0 and xs < len_x and ys >= 0 and ys < len_y and zs >= 0 and zs < len_z:
 
@@ -74,7 +74,7 @@ def _calc_run_length(int [:,:,:] image,
     ys = y0
     zs = z0
     
-    while boundary_check(xs, ys, zs, len_x, len_y, len_z):
+    while _boundary_check(xs, ys, zs, len_x, len_y, len_z):
 
         array[n] = image[zs, xs, ys]
 

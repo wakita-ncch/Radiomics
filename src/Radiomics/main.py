@@ -1,6 +1,7 @@
 from group1_features import *
 from group2_features import *
 from group3_glcm import *
+from group3_glrl import *
 
 import pyximport
 import numpy as np
@@ -9,33 +10,31 @@ pyximport.install(setup_args={'include_dirs':[np.get_include()]}, inplace=True)
 
 from _glrl_loop import _glrl_vector_loop
 
-#import scipy.misc
-#import matplotlib.pyplot as plt
+import scipy.misc
+import matplotlib.pyplot as plt
+import pywt
 
 from profiling_tools import time
 
-@time
-def glrl_vector_loop(image, direction, bin_width):
+def wavelet_transform(image):
 
-    # convert pixel intensities into gray levels wi
-
-    bin_width = int(bin_width)
-
-    image /= bin_width
-
-    return _glrl_vector_loop(image, direction)
+    return pywt.dwtn(image, 'coif1')
 
 def main():
 
-    image = np.array([[[5, 2, 5, 4, 4], 
-                       [3, 3, 3, 1, 3],
-                       [2, 1, 1, 1, 3],
-                       [4, 2, 2, 2, 3],
-                       [3, 5, 3, 3, 2]]])
+    #image = np.array([[[5, 2, 5, 4, 4], 
+    #                   [3, 3, 3, 1, 3],
+    #                   [2, 1, 1, 1, 3],
+    #                   [4, 2, 2, 2, 3],
+    #                   [3, 5, 3, 3, 2]]])
 
-    #image = np.arange(3 * 3 * 3).reshape((3, 3, 3))
+    image = np.arange(3 * 3 * 3).reshape((3, 3, 3))
 
-    print glrl_vector_loop(image, 1, 1)
+    #coeffs = pywt.dwtn(image, 'coif1')
+
+    print wavelet_transform(image)
+
+    #GLRL_Matrix(image, 1, 1)
 
     #volume = np.arange(5 * 7 * 8).reshape((5, 7, 8))
 

@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>d4708545-5a94-41ba-827c-8b81e99e1d7d</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>main.py</StartupFile>
+    <StartupFile>dicom_module.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -22,6 +22,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="dicom_module.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="glcm - old.txt" />
     <Compile Include="group3_glcm.py">
       <SubType>Code</SubType>
@@ -48,6 +51,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="_glrl_loop.pyx">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="_point_in_polygon.pyx">
       <SubType>Code</SubType>
     </Content>
   </ItemGroup>
