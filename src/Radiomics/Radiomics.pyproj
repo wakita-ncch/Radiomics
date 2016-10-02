@@ -53,6 +53,9 @@
     <Content Include="_glrl_loop.pyx">
       <SubType>Code</SubType>
     </Content>
+    <Content Include="_make_masked_image.pyx">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="_point_in_polygon.pyx">
       <SubType>Code</SubType>
     </Content>

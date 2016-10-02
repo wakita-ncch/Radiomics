@@ -14,6 +14,7 @@ import numpy as np
 pyximport.install(setup_args={'include_dirs':[np.get_include()]}, inplace=True)
 
 from _point_in_polygon import _point_in_polygon
+from _make_masked_image import _make_masked_image
 
 from profiling_tools import *
 
@@ -322,7 +323,7 @@ class StructureLoader(object):
 
         self.coord_dict = makeCoordinationDictionary(struct_dcm, struct_id)
 
-        if True:
+        if False:
 
             self.surface = makeTriangulatedMesh(self.coord_dict, _division_spacing, _sigma, _num_threads)
             showPolydata(self.surface)
@@ -452,6 +453,59 @@ class ImageLoader(object):
         self.sorted_images = sorted_images
         self.images = images
 
+@time
+def makeMaskedImage(image, contours, imageLoader):
+
+    assert len(contours) == 1
+
+    #val_max = np.max(image)
+    #val_min = np.min(image)
+
+    #for contour in contours:
+
+    #    for i, point in enumerate(contour):
+
+    #        (X, Y, Z) = point
+
+    #        x = int((X - imageLoader.imagePositionPatientX) / imageLoader.pixelSpacingX)
+    #        y = int((Y - imageLoader.imagePositionPatientY) / imageLoader.pixelSpacingY)
+    #        z = int(Z)
+
+    #        if i > 0:
+
+    #            (X1, Y1, Z1) = contour[i-1]
+
+    #            x1 = int((X1 - imageLoader.imagePositionPatientX) / imageLoader.pixelSpacingX)
+    #            y1 = int((Y1 - imageLoader.imagePositionPatientY) / imageLoader.pixelSpacingY)
+    #            z1 = int(Z1)         
+
+    #            plt.plot([x, x1], [y, y1], 'r-')
+
+    #masked_image = np.copy(image)
+
+    #ys = np.arange(masked_image.shape[0])
+    #xs = np.arange(masked_image.shape[1])
+
+    for y in range(image.shape[0]):
+
+        for x in range(image.shape[1]):
+
+            X = x * imageLoader.pixelSpacingX + imageLoader.imagePositionPatientX
+            Y = y * imageLoader.pixelSpacingY + imageLoader.imagePositionPatientY
+
+            for contour in contours:
+
+                if not c_PointInPolygon(X, Y, contour):
+
+                    image[y, x] = 0
+
+    return image
+
+@time
+def c_makeMaskedImage(image, contours, shape0, shape1, psX, psY, ippX, ippY):
+
+    return _make_masked_image(image, contours, shape0, shape1, psX, psY, ippX, ippY)
+
 if __name__ == '__main__':
 
     dir_path = 'C:\Users\Kaz\Desktop\ST'
@@ -477,65 +531,17 @@ if __name__ == '__main__':
         image = imageLoader.images[slice_num]
         contours = structureLoader.coord_dict[slice_num]
 
-        print "Num contours: ", len(contours)
+        #masked_image = makeMaskedImage(image, contours, imageLoader)
+        masked_image = c_makeMaskedImage(image, contours, image.shape[0], image.shape[1], 
+                                         imageLoader.pixelSpacingX, imageLoader.pixelSpacingY, 
+                                         imageLoader.imagePositionPatientX, imageLoader.imagePositionPatientY)
 
-        # show initial image
-
-        val_max = np.max(image)
-        val_min = np.min(image)
-
-        plt.gray()
-        plt.imshow(image, vmin = val_min, vmax = val_max)
+        #plt.close()
+        #plt.gray()
+        #plt.imshow(masked_image)
         #plt.show()
 
-        # show image with contour
+        stacked_image = np.vstack((stacked_image, masked_image)) if 'stacked_image' in locals() else masked_image
 
-        plt.imshow(image, vmin = val_min, vmax = val_max)
-        plt.axis([0, int(imageLoader.rows)-1, int(imageLoader.columns)-1, 0])
-
-        for contour in contours:
-
-            for i, point in enumerate(contour):
-
-                (X, Y, Z) = point
-
-                x = int((X - imageLoader.imagePositionPatientX) / imageLoader.pixelSpacingX)
-                y = int((Y - imageLoader.imagePositionPatientY) / imageLoader.pixelSpacingY)
-                z = int(Z)
-
-                #image[y,x] = 0
-
-                if i > 0:
-
-                    (X1, Y1, Z1) = contour[i-1]
-
-                    x1 = int((X1 - imageLoader.imagePositionPatientX) / imageLoader.pixelSpacingX)
-                    y1 = int((Y1 - imageLoader.imagePositionPatientY) / imageLoader.pixelSpacingY)
-                    z1 = int(Z1)         
-
-                    plt.plot([x, x1], [y, y1], 'r-')
-
-        #plt.show()
-
-        # make masked image
-
-        masked_image = np.copy(image)
-
-        ys = np.arange(masked_image.shape[0])
-        xs = np.arange(masked_image.shape[1])
-
-        for y in ys:
-
-            for x in xs:
-
-                X = x * imageLoader.pixelSpacingX + imageLoader.imagePositionPatientX
-                Y = y * imageLoader.pixelSpacingY + imageLoader.imagePositionPatientY
-
-                for contour in contours:
-
-                    if not c_PointInPolygon(X, Y, contour):
-
-                        masked_image[y, x] = 0
-
-        plt.imshow(masked_image, vmin = val_min, vmax = val_max)
-        #plt.show()
+    print stacked_image
+    print np.max(stacked_image)
