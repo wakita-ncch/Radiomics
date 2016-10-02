@@ -544,3 +544,4 @@ if __name__ == '__main__':
         stacked_image = np.vstack((stacked_image, masked_image)) if 'stacked_image' in locals() else masked_image
 
     print stacked_image
+    pass
