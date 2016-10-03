@@ -70,6 +70,7 @@ artifacts/
 *.scc
 *.pyd
 *.pyc
+*.dcm
 
 # Chutzpah Test files
 _Chutzpah*
