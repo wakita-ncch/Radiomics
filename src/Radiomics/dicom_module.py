@@ -14,7 +14,7 @@ import numpy as np
 pyximport.install(setup_args={'include_dirs':[np.get_include()]}, inplace=True)
 
 from _point_in_polygon import _point_in_polygon
-from _make_masked_image import _make_masked_image
+from _make_masked_image import _make_masked_image, _form_stacked_image
 
 from profiling_tools import *
 
@@ -54,7 +54,6 @@ def makeCoordinationDictionary(ds, structure_id):
 
     return coord_dict
 
-@time
 def makeTriangulatedMesh(coordination_dictionary, division_spacing, sigma, num_threads):
 
     max_X = -1e10
@@ -242,8 +241,6 @@ def PointInPolygon(x, y, poly):
 
 def c_PointInPolygon(x, y, poly):
 
-    #poly = np.array(poly)
-
     return False if _point_in_polygon(x, y, poly) < 0 else True
 
 def makeITKImage(dimensions, pixelType):
@@ -270,8 +267,6 @@ def makeITKImage(dimensions, pixelType):
     image.FillBuffer(0)
     
     return image
-
-### Functions for vtk ###
 
 def makeActor(polyData, color):
     
@@ -323,10 +318,22 @@ class StructureLoader(object):
 
         self.coord_dict = makeCoordinationDictionary(struct_dcm, struct_id)
 
-        if False:
+        if not os.path.exists('./tumor_surface.vtk'):
 
             self.surface = makeTriangulatedMesh(self.coord_dict, _division_spacing, _sigma, _num_threads)
-            showPolydata(self.surface)
+            
+            writer = vtk.vtkPolyDataWriter()
+            writer.SetInput(self.surface)
+            writer.SetFileName('./tumor_surface.vtk')
+            writer.Write()
+
+        elif os.path.exists('./tumor_surface.vtk'):
+
+            reader = vtk.vtkPolyDataReader()
+            reader.SetFileName('./tumor_surface.vtk')
+            reader.Update()
+
+            self.surface = reader.GetOutput()
 
     def getZRange(self):
 
@@ -413,8 +420,6 @@ class ImageLoader(object):
         self.rows = None
         self.columns = None
 
-        # sort images according to z slice location
-
         unsorted_images = getDicomFiles(dcm_dir_path)
         unsorted_positions = []
         images = {}
@@ -453,38 +458,34 @@ class ImageLoader(object):
         self.sorted_images = sorted_images
         self.images = images
 
-@time
+def drawContourOnImage(image, contours, imageLoader):
+
+    plt.gray()
+    plt.imshow(image)
+
+    for contour in contours:
+
+        for i, point in enumerate(contour):
+
+            (X, Y, Z) = point
+
+            x = int((X - imageLoader.imagePositionPatientX) / imageLoader.pixelSpacingX)
+            y = int((Y - imageLoader.imagePositionPatientY) / imageLoader.pixelSpacingY)
+            z = int(Z)
+
+            if i > 0:
+
+                (X1, Y1, Z1) = contour[i-1]
+
+                x1 = int((X1 - imageLoader.imagePositionPatientX) / imageLoader.pixelSpacingX)
+                y1 = int((Y1 - imageLoader.imagePositionPatientY) / imageLoader.pixelSpacingY)
+                z1 = int(Z1)         
+
+                plt.plot([x, x1], [y, y1], 'r-')
+
+    plt.show()
+
 def makeMaskedImage(image, contours, imageLoader):
-
-    assert len(contours) == 1
-
-    #val_max = np.max(image)
-    #val_min = np.min(image)
-
-    #for contour in contours:
-
-    #    for i, point in enumerate(contour):
-
-    #        (X, Y, Z) = point
-
-    #        x = int((X - imageLoader.imagePositionPatientX) / imageLoader.pixelSpacingX)
-    #        y = int((Y - imageLoader.imagePositionPatientY) / imageLoader.pixelSpacingY)
-    #        z = int(Z)
-
-    #        if i > 0:
-
-    #            (X1, Y1, Z1) = contour[i-1]
-
-    #            x1 = int((X1 - imageLoader.imagePositionPatientX) / imageLoader.pixelSpacingX)
-    #            y1 = int((Y1 - imageLoader.imagePositionPatientY) / imageLoader.pixelSpacingY)
-    #            z1 = int(Z1)         
-
-    #            plt.plot([x, x1], [y, y1], 'r-')
-
-    #masked_image = np.copy(image)
-
-    #ys = np.arange(masked_image.shape[0])
-    #xs = np.arange(masked_image.shape[1])
 
     for y in range(image.shape[0]):
 
@@ -501,47 +502,22 @@ def makeMaskedImage(image, contours, imageLoader):
 
     return image
 
-@time
 def c_makeMaskedImage(image, contours, shape0, shape1, psX, psY, ippX, ippY):
 
     return _make_masked_image(image, contours, shape0, shape1, psX, psY, ippX, ippY)
 
-if __name__ == '__main__':
-
-    dir_path = 'C:\Users\Kaz\Desktop\ST'
-
-    struct_dcm = dicom.read_file(dir_path + '\struct.dcm')
-
-    for i, structure in enumerate(struct_dcm.StructureSetROISequence):
-
-        name = structure.ROIName
-
-        print i, name
-
-    selected = int(raw_input("Select the structure for mesh creation: "))
-
-    structureLoader = StructureLoader(struct_dcm, selected)
-
-    imageLoader = ImageLoader('./data/fusedMRI')
+def makeMaskedVolume(imageLoader, structureLoader):
 
     for slice_num in structureLoader.getZRange():
-
-        print "slice num: ", slice_num
 
         image = imageLoader.images[slice_num]
         contours = structureLoader.coord_dict[slice_num]
 
-        #masked_image = makeMaskedImage(image, contours, imageLoader)
         masked_image = c_makeMaskedImage(image, contours, image.shape[0], image.shape[1], 
                                          imageLoader.pixelSpacingX, imageLoader.pixelSpacingY, 
                                          imageLoader.imagePositionPatientX, imageLoader.imagePositionPatientY)
 
-        #plt.close()
-        #plt.gray()
-        #plt.imshow(masked_image)
-        #plt.show()
+        stacked_image = np.dstack((stacked_image, masked_image)) if 'stacked_image' in locals() else masked_image
 
-        stacked_image = np.vstack((stacked_image, masked_image)) if 'stacked_image' in locals() else masked_image
+    return _form_stacked_image(stacked_image)
 
-    print stacked_image
-    pass

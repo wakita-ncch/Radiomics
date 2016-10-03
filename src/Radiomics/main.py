@@ -2,6 +2,7 @@ from group1_features import *
 from group2_features import *
 from group3_glcm import *
 from group3_glrl import *
+from dicom_module import *
 
 import pyximport
 import numpy as np
@@ -13,8 +14,56 @@ from _glrl_loop import _glrl_vector_loop
 import scipy.misc
 import matplotlib.pyplot as plt
 import pywt
-
+import pickle
 from profiling_tools import time
+
+def loadImageAndSurface():
+
+    try:
+
+        with open('masked_volume.pickle', mode = 'rb') as f:
+
+            masked_volume = pickle.load(f)
+
+        struct_dcm = dicom.read_file('./data/struct.dcm')
+
+        #for i, structure in enumerate(struct_dcm.StructureSetROISequence):
+
+        #    name = structure.ROIName
+
+        #    print i, name
+
+        #selected = int(raw_input("Select the structure for mesh creation: "))
+
+        structureLoader = StructureLoader(struct_dcm, 0)
+
+        polydata = structureLoader.surface
+
+    except:
+
+        struct_dcm = dicom.read_file('./data/struct.dcm')
+
+        #for i, structure in enumerate(struct_dcm.StructureSetROISequence):
+
+        #    name = structure.ROIName
+
+        #    print i, name
+
+        #selected = int(raw_input("Select the structure for mesh creation: "))
+
+        structureLoader = StructureLoader(struct_dcm, 0)
+
+        polydata = structureLoader.surface
+
+        imageLoader = ImageLoader('./data/fusedMRI')
+
+        masked_volume = makeMaskedVolume(imageLoader, structureLoader)
+
+        with open('masked_volume.pickle', mode = 'wb') as f:
+
+            pickle.dump(masked_volume, f)
+
+    return masked_volume, polydata
 
 def wavelet_transform(image):
 
@@ -22,48 +71,28 @@ def wavelet_transform(image):
 
 def main():
 
-    #image = np.array([[[5, 2, 5, 4, 4], 
-    #                   [3, 3, 3, 1, 3],
-    #                   [2, 1, 1, 1, 3],
-    #                   [4, 2, 2, 2, 3],
-    #                   [3, 5, 3, 3, 2]]])
+    image = np.array([[[0,0,4,5,7],
+                      [1,2,4,6,0],
+                      [3,4,6,0,1],
+                      [7,4,0,1,4]]]).astype(np.uint16)
 
-    image = np.arange(3 * 3 * 3).reshape((3, 3, 3))
+    print "initial image: ", image
 
-    #coeffs = pywt.dwtn(image, 'coif1')
+    GLCM_Matrix(image, 1, [0,1,0],1)
 
-    print wavelet_transform(image)
+    #group1_features(masked_volume)
 
-    #GLRL_Matrix(image, 1, 1)
+    #group2_features(polydata)
 
-    #volume = np.arange(5 * 7 * 8).reshape((5, 7, 8))
+    #GLCM_Matrix(masked_volume, 1, [0,1,1], 25)
 
-    #vector = [0, 1, 1]
+    #group3_glrl_features(masked_volume, 25)
 
-    #glcm = GLCM_Matrix(volume, 1.0, vector, 10)
+    #decomposed_image = wavelet_transform(masked_volume)
 
-    ##print "matrix: ", glcm.glcm_matrix
-    #print "sum: ", np.sum(glcm.glcm_matrix)
-    #print "levels: ", np.arange(1, glcm.glcm_matrix.shape[0]+1)
-    #print "ux: ", np.sum(np.sum(glcm.glcm_matrix, axis=1))
-    #print "uy: ", np.sum(np.sum(glcm.glcm_matrix, axis=0))
+    #for key in decomposed_image.keys():
 
-    #print "autocorrelation: ", glcm.autocorrelation()
-    #print "cluster prominence: ", glcm.cluster_prominence()
-    #print "cluster shade: ", glcm.cluster_shade()
-    #print "cluster tendency: ", glcm.cluster_tendency()
-    #print "contrast: ", glcm.contrast()
-    ##print "difference entropy: ", glcm.difference_entropy()
-    #print "dissimilarity: ", glcm.dissimilarity()
-    #print "energy: ", glcm.energy()
-    ##print "entropy: ", glcm.entropy()
-    #print "homogeneity1: ", glcm.homogeneity1()
-    #print "homogeneity2: ", glcm.homogeneity2()
-    ##print "IMC1: ", glcm.IMC1()
-    ##print "IMC2: ", glcm.IMC2()
-    ##print "IDMN: ", glcm.IDMN()
-    ##print "IDN: ", glcm.IDN()
-    ##print "inverse variance: ", glcm.inverse_variance()
+    #    image = decomposed_image[key]
 
 if __name__ == '__main__':
 

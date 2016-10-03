@@ -54,7 +54,7 @@ def _boundary_check(int xs, int ys, int zs, int len_x, int len_y, int len_z):
 
         return False
 
-def _calc_run_length(int [:,:,:] image, 
+def _calc_run_length(unsigned short [:,:,:] image, 
                      int x0, int y0, int z0, 
                      int dx, int dy, int dz, 
                      int [:,:] out):
@@ -103,7 +103,7 @@ def _form_np_matrix(np.ndarray out):
     return out[:,0:-i]
     
 @cython.boundscheck(False)
-def _glrl_vector_loop(int [:,:,:] image, int direction):
+def _glrl_vector_loop(unsigned short [:,:,:] image, int direction):
 
     # image : converted to gray levels
 

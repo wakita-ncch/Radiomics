@@ -44,3 +44,48 @@ def _make_masked_image(unsigned short [:,:] image, contours, int shape0, int sha
                     image[y, x] = 0
 
     return image
+
+@cython.boundscheck(False)
+def _form_stacked_image(stacked_image): #unsigned short [:,:,:] stacked_image
+
+    cdef int x, idx, idx_first, idx_last
+    cdef int y, idy, idy_first, idy_last
+
+    sum_x = np.sum(np.sum(stacked_image, axis = 0), axis = 1)
+    sum_y = np.sum(np.sum(stacked_image, axis = 1), axis = 1)
+
+    for idx, x in enumerate(sum_x):
+
+        if x != 0:
+
+            idx_first = idx
+
+            break
+
+    for idx, x in enumerate(sum_x[::-1]):
+
+        if x != 0:
+
+            idx_last = idx
+
+            break
+
+    for idy, y in enumerate(sum_y):
+
+        if y != 0:
+
+            idy_first = idy
+
+            break
+
+    for idy, y in enumerate(sum_y[::-1]):
+
+        if y != 0:
+
+            idy_last = idy
+
+            break
+
+    formed_array = stacked_image[idy_first:-idy_last, idx_first:-idx_last, :] 
+
+    return formed_array

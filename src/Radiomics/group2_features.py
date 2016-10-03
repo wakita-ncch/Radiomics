@@ -17,6 +17,35 @@ V : Volume
 A : Surface area
 """
 
+def group2_features(polydata):
+
+    V = volume(polydata)
+    A = surface_area(polydata)
+
+    points_array = []
+    
+    for i in range(polydata.GetNumberOfPoints()):
+
+        point = polydata.GetPoint(i)
+
+        points_array.append(point)
+
+    points_array = np.array(points_array)
+
+    group2_features = {}
+    group2_features["compactness 1"] = compactness_1(V, A)
+    group2_features["compactness 2"] = compactness_2(V, A)
+    group2_features["maximum 3d diameter"] = c_maximum_diameter(points_array)
+    group2_features["spherical disproportion"] = spherical_disproportion(V, A)
+    group2_features["sphericity"] = sphericity(V, A)
+    group2_features["surface area"] = A
+    group2_features["surface to volume ratio"] = surface_to_volume_ratio(V, A)
+    group2_features["volume"] = V
+
+    print group2_features
+
+    return group2_features
+
 def compactness_1(V, A):
 
     return V/(math.sqrt(math.pi) * A ** (2.0/3.0))

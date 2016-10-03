@@ -9,7 +9,39 @@ Group 1 : First order statistics
 X : numpy 1-d array
 """
 
-# comment
+def group1_features(image):
+
+    X = []
+
+    for i in image.ravel():
+
+        if i > 0:
+
+            X.append(i)
+
+    X = np.array(X)
+
+    group1_features = {}
+
+    group1_features["energy"] = energy(X)
+    group1_features["entropy"] = entropy(X)
+    group1_features["mean"] = mean(X)
+    group1_features["kurtosis"] = kurtosis(X)
+    group1_features["maximum"] = maximum(X)
+    group1_features["mean"] = mean(X)
+    group1_features["mean absolute deviation"] = mean_absolute_deviation(X)
+    group1_features["median"] = median(X)
+    group1_features["minimum"] = minimum(X)
+    group1_features["range"] = _range(X)
+    group1_features["root mean square"] = root_mean_square(X)
+    group1_features["skewness"] = skewness(X)
+    group1_features["standard deviation"] = standard_deviation(X)
+    group1_features["uniformity"] = uniformity(X)
+    group1_features["variance"] = variance(X)
+
+    print group1_features
+
+    return group1_features
 
 def energy(X):
 
@@ -19,7 +51,7 @@ def entropy(X):
 
     hist, bin_edges = np.histogram(X, density = True)
 
-    return np.sum(np.dot(hist, np.log2(hist)))
+    return - np.sum(np.dot(hist, np.log2(hist)))
 
 def kurtosis(X):
 
@@ -45,7 +77,7 @@ def minimum(X):
 
     return np.min(X)
 
-def range(X):
+def _range(X):
 
     return np.max(X) - np.min(X)
 
