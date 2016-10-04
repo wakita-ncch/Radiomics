@@ -17,6 +17,8 @@ import pywt
 import pickle
 from profiling_tools import time
 
+import csv
+
 def loadImageAndSurface():
 
     try:
@@ -69,30 +71,74 @@ def wavelet_transform(image):
 
     return pywt.dwtn(image, 'coif1')
 
+def saveDictionary(dict, filepath):
+
+    with open(filepath, 'ab') as f:
+
+        csv_writer = csv.writer(f, delimiter = ',')
+
+        for key in dict.keys():
+
+            _data = []
+            _data.append(key)
+            _data.append(dict[key])
+            csv_writer.writerow(_data)
+
+        f.close()
+
 def main():
 
-    image = np.array([[[0,0,4,5,7],
-                      [1,2,4,6,0],
-                      [3,4,6,0,1],
-                      [7,4,0,1,4]]]).astype(np.uint16)
+    image, polydata = loadImageAndSurface()
 
-    print "initial image: ", image
+    bin_width = 20
 
-    GLCM_Matrix(image, 1, [0,1,0],1)
+    # 0 -> 0, 1 ~ bin -> 1, bin+1 ~ 2bin -> 2
 
-    #group1_features(masked_volume)
+    scaled_image = np.copy(image)
+    scaled_image += bin_width - 1
+    scaled_image /= bin_width
 
-    #group2_features(polydata)
+    dict = {}
 
-    #GLCM_Matrix(masked_volume, 1, [0,1,1], 25)
+    dict.update(group1_features(image))
 
-    #group3_glrl_features(masked_volume, 25)
+    dict.update(group2_features(polydata))
 
-    #decomposed_image = wavelet_transform(masked_volume)
+    dict.update(group3_glcm_features(scaled_image, 1))
 
-    #for key in decomposed_image.keys():
+    dict.update(group3_glrl_features(scaled_image))
 
-    #    image = decomposed_image[key]
+    saveDictionary(dict, 'radiomics.csv')
+
+    decomposed_images = wavelet_transform(image)
+
+    for key in decomposed_images.keys():
+
+        decomposed_dict = {}
+
+        decomposed_image = (decomposed_images[key])
+        decomposed_image -= np.min(decomposed_image)   
+
+        decomposed_image = decomposed_image.astype(np.uint16)
+
+        decomposed_dict.update(group1_features(decomposed_image))
+
+        scaled_decomposed_image = np.copy(decomposed_image)
+        scaled_decomposed_image += bin_width - 1
+        scaled_decomposed_image /= bin_width
+
+        decomposed_dict.update(group3_glcm_features(scaled_decomposed_image, 1))
+        decomposed_dict.update(group3_glrl_features(scaled_decomposed_image))
+
+        for _key in decomposed_dict.keys():
+
+            val = decomposed_dict[_key]
+
+            decomposed_dict[key + '_' + _key] = val
+
+            del decomposed_dict[_key]
+
+        saveDictionary(decomposed_dict, 'radiomics.csv')  
 
 if __name__ == '__main__':
 

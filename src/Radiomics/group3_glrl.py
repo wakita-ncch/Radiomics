@@ -7,17 +7,7 @@ from _glrl_loop import _glrl_vector_loop
 
 from profiling_tools import time
 
-#def glrl_vector_loop(image, direction, bin_width):
-
-#    # convert pixel intensities into gray levels wi
-
-#    bin_width = int(bin_width)
-
-#    image /= bin_width
-
-#    return _glrl_vector_loop(image, direction)
-
-def group3_glrl_features(image, bin_width):
+def group3_glrl_features(image):
 
     SRE = []
     LRE = []
@@ -31,11 +21,11 @@ def group3_glrl_features(image, bin_width):
     LRLGLE = []
     LRHGLE = []
 
-    group3_features = {}
+    glrl_features = {}
 
     for i in range(1, 13):
 
-        glrl_matrix = GLRL_Matrix(image, i, bin_width)
+        glrl_matrix = GLRL_Matrix(image, i)
 
         SRE.append(glrl_matrix.short_run_emphasis())
         LRE.append(glrl_matrix.long_run_emphasis())
@@ -49,30 +39,25 @@ def group3_glrl_features(image, bin_width):
         LRLGLE.append(glrl_matrix.long_run_low_gray_level_emphasis())
         LRHGLE.append(glrl_matrix.long_run_high_gray_level_emphasis())
 
-    group3_features['SRE'] = np.mean(SRE)
-    group3_features['LRE'] = np.mean(LRE)
-    group3_features['GLN'] = np.mean(GLN)
-    group3_features['RLN'] = np.mean(RLN)
-    group3_features['RP'] = np.mean(RP)
-    group3_features['LGLRE'] = np.mean(LGLRE)
-    group3_features['HGLRE'] = np.mean(HGLRE)
-    group3_features['SRLGLE'] = np.mean(SRLGLE)
-    group3_features['SRHGLE'] = np.mean(SRHGLE)
-    group3_features['LRLGLE'] = np.mean(LRLGLE)
-    group3_features['LRHGLE'] = np.mean(LRHGLE)
+    glrl_features['SRE'] = np.mean(SRE)
+    glrl_features['LRE'] = np.mean(LRE)
+    glrl_features['GLN'] = np.mean(GLN)
+    glrl_features['RLN'] = np.mean(RLN)
+    glrl_features['RP'] = np.mean(RP)
+    glrl_features['LGLRE'] = np.mean(LGLRE)
+    glrl_features['HGLRE'] = np.mean(HGLRE)
+    glrl_features['SRLGLE'] = np.mean(SRLGLE)
+    glrl_features['SRHGLE'] = np.mean(SRHGLE)
+    glrl_features['LRLGLE'] = np.mean(LRLGLE)
+    glrl_features['LRHGLE'] = np.mean(LRHGLE)
 
-    print group3_features
+    print glrl_features
 
-    return group3_features
+    return glrl_features
 
 class GLRL_Matrix:
 
-    def __init__(self, image, direction, bin_width):
-
-        bin_width = int(bin_width)
-
-        image += (bin_width - 1) 
-        image /= bin_width # 0 -> 0, 1 ~ bin -> 1, bin+1 ~ 2bin -> 2
+    def __init__(self, image, direction):
 
         self.image = image
 

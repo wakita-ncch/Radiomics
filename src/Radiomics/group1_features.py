@@ -51,7 +51,17 @@ def entropy(X):
 
     hist, bin_edges = np.histogram(X, density = True)
 
-    return - np.sum(np.dot(hist, np.log2(hist)))
+    _entropy = []
+
+    for val in hist:
+
+        if val != 0:
+
+            _entropy.append(float(val) * math.log(val, 2))
+
+    return - np.sum(_entropy)
+
+    #return - np.sum(np.dot(hist, np.log2(hist)))
 
 def kurtosis(X):
 
